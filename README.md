@@ -5,7 +5,7 @@ You will end up with two web links:
 - **You:** `https://YOUR-NAME.github.io/probability-studio/board.html` (timer, QR code, top-5 leaderboard)
 
 No coding. About 45 minutes the first time. Everything used is free and open source.
-Only Game 1 is built so far. Games 2 to 4 are added later by dropping in one more file each.
+All four games are built (one per module). On class day you pick the game with the **Game** dropdown on the instructor page.
 
 Do the steps in order.
 
@@ -54,14 +54,15 @@ Both values are meant to be public. Your passcode is the secret one, and it is n
 You already have a GitHub account, so:
 
 1. Go to **github.com**, click **+** (top right), then **New repository**.
-   Name it `probability-studio`, choose **Public**, and click **Create repository**.
-2. Click **uploading an existing file**.
-3. Open the unzipped folder and select **the files inside it** (`index.html`, `board.html`, `engine.js`, `game1.js`, `api.js`, `config.js`, `qrcode.js`, `test.js`, `README.md`). Drag them into the browser.
+   Name it `probability-studio` and choose **Public**. If you tick "Add a README" or a license, GitHub creates the repo with those files already in it (that is fine).
+2. On the repository page, click the **+** button next to "Go to file", then **Upload files**. (An empty repo shows an "uploading an existing file" link instead.)
+3. Open the unzipped folder and select **the files inside it**: `index.html`, `board.html`, `engine.js`, `game1.js`, `game2.js`, `game3.js`, `game4.js`, `api.js`, `config.js`, `qrcode.js`, `test.js`, `test_games.js`, `README.md`. Drag them into the browser.
    **Do not upload the `setup-only` folder.**
 4. Click **Commit changes**.
 5. Go to the repository's **Settings**, then **Pages**. Under "Build and deployment" choose **Deploy from a branch**, branch **main**, folder **/(root)**, and click **Save**.
-6. Wait 1 to 2 minutes. The page shows your live address: `https://YOUR-NAME.github.io/probability-studio/`.
-7. Open `.../board.html` on your computer and `.../index.html` on your phone. If both work, you are done.
+6. If the **Actions** tab shows no "pages build and deployment" run after a minute, edit `README.md` on GitHub (add a space) and commit. That starts the build. Ignore every "Configure" card on the Actions page.
+7. Wait 1 to 2 minutes. Your live address is `https://YOUR-NAME.github.io/probability-studio/`.
+8. Open `.../board.html` on your computer and `.../index.html` on your phone. If both work, you are done.
 
 If you change a file later (for example `config.js`), open it on GitHub, click the pencil icon, edit, and commit. The site updates in about a minute.
 
@@ -104,6 +105,15 @@ Canvas upload: the CSV has `Login ID, Game, Balance, Points (%)`. Canvas's own i
 
 ## Files
 
-`index.html` student page · `board.html` your page · `engine.js` scoring · `game1.js` Game 1 questions · `api.js` database helper · `config.js` your 2 keys · `qrcode.js` open-source QR library (MIT) · `test.js` run `node test.js` to check the math.
+`index.html` student page · `board.html` your page · `engine.js` scoring · `game1.js` to `game4.js` the four games' questions · `api.js` database helper · `config.js` your 2 keys · `qrcode.js` open-source QR library (MIT) · `test.js` and `test_games.js` math checks (run `node test.js` and `node test_games.js`; the second simulates every formula).
 
+## The four games
 
+| Game | Module | Story | Rounds |
+|---|---|---|---|
+| 1 Saturday Gift Run | Modeling Uncertainty | One Saturday at the mall | Counting, set theory and axioms, binomial and multinomial, conditional probability |
+| 2 The $400 TV Deal | Decision Making Under Uncertainty | One TV, from sale to doorstep | Tree diagrams, total probability, Bayes, independence |
+| 3 Last-Minute Rush | Random Variables and Engineering Systems | Dec 20 shopping and shipping | Binomial and geometric, normal and sums, Poisson, exponential |
+| 4 Can I Trust This Store? | Expectations, Variability and Risk | Judging deals and store claims | Expected value and variance, covariance, Chebyshev and CLT, confidence interval and hypothesis test |
+
+Left out to keep each game to 4 decisions in 50 minutes: multinomial extensions beyond Game 1, Gamma and joint distributions, Markov's inequality, chi-square, and Module 5.

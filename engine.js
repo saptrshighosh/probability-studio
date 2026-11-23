@@ -29,6 +29,13 @@
     return c;
   }
   const fact = n => (n < 2 ? 1 : n * fact(n - 1));
+  const binom = (n, k, p) => comb(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+  const pois = (k, l) => Math.exp(-l) * Math.pow(l, k) / fact(k);
+  function Phi(x) { // standard normal CDF (Abramowitz & Stegun 26.2.17, error < 1e-7)
+    const t = 1 / (1 + 0.2316419 * Math.abs(x)), d = 0.3989423 * Math.exp(-x * x / 2);
+    const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+    return x > 0 ? 1 - p : p;
+  }
 
   // Round r (1-based) of a game, with numbers fixed by (student, game, round).
   function build(game, student, r) {
@@ -75,7 +82,7 @@
     return Math.round(START + SCALE * sum);
   }
 
-  const Engine = { START, SCALE, BONUS, hash, rng, pick, comb, fact, build, result, balance };
+  const Engine = { START, SCALE, BONUS, hash, rng, pick, comb, fact, binom, pois, Phi, build, result, balance };
   root.Engine = Engine;
   if (typeof module !== 'undefined') module.exports = Engine;
 })(typeof globalThis !== 'undefined' ? globalThis : window);

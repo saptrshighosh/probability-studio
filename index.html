@@ -26,6 +26,9 @@
 <script src="config.js"></script>
 <script src="engine.js"></script>
 <script src="game1.js"></script>
+<script src="game2.js"></script>
+<script src="game3.js"></script>
+<script src="game4.js"></script>
 <script src="api.js"></script>
 <script>
 const $ = id => document.getElementById(id), app = $('app');
@@ -55,10 +58,11 @@ function loginView(msg) {
 const isOpen = () => st && st.open_until && Date.parse(st.open_until) > API.now();
 const upTo = () => (st.round === 0 ? 0 : (isOpen() ? st.round - 1 : st.round));
 
-function parseProb(s) {
-  s = String(s).trim(); if (!s) return null;
+// kind 'num' = plain number ($, z-score...). Default = probability: "44.7%" or "44.7" become 0.447.
+function parseAnswer(s, kind) {
+  s = String(s).trim().replace(/[$,]/g, ''); if (!s) return null;
   let x = parseFloat(s); if (isNaN(x)) return null;
-  if (s.includes('%') || x > 1) x /= 100;
+  if (kind !== 'num' && (s.includes('%') || x > 1)) x /= 100;
   return x;
 }
 
@@ -92,8 +96,8 @@ function draw() {
       else {
         html += `<div class="card"><h2>${esc(R.title)}</h2><p>${esc(R.story)}</p><form id="f">` +
           R.options.map(o => `<label class="opt"><input type="radio" name="ch" value="${o.id}"> ${esc(o.label)}</label>`).join('') +
-          `<p class="muted">Optional bonus (+$${Engine.BONUS} each if close). Enter a decimal like 0.447 or a percent like 44.7%.</p>` +
-          R.asks.map((a, i) => `<label for="n${i}">${esc(a.label)}</label><input id="n${i}" inputmode="decimal">`).join('') +
+          `<p class="muted">Optional bonus (+$${Engine.BONUS} each if close).</p>` +
+          R.asks.map((a, i) => `<label for="n${i}">${esc(a.label)}${a.kind === 'num' ? '' : ' (decimal like 0.447, or %)'}</label><input id="n${i}" inputmode="${a.kind === 'num' ? 'text' : 'decimal'}">`).join('') +
           `<button type="submit" id="sub">Submit answer</button><p class="err" id="fm"></p></form></div>`;
       }
     } else {
@@ -119,7 +123,7 @@ async function submit(ev) {
   if (!ch) { $('fm').textContent = 'Pick an option first.'; return; }
   const R = Engine.build(st.game, me, st.round);
   $('sub').disabled = true;
-  pending = { student: me, game: st.game, round: st.round, choice: ch.value, nums: R.asks.map((a, i) => parseProb($('n' + i).value)) };
+  pending = { student: me, game: st.game, round: st.round, choice: ch.value, nums: R.asks.map((a, i) => parseAnswer($('n' + i).value, a.kind)) };
   await trySubmit(); render();
 }
 
