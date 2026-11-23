@@ -105,3 +105,5 @@ Canvas upload: the CSV has `Login ID, Game, Balance, Points (%)`. Canvas's own i
 ## Files
 
 `index.html` student page · `board.html` your page · `engine.js` scoring · `game1.js` Game 1 questions · `api.js` database helper · `config.js` your 2 keys · `qrcode.js` open-source QR library (MIT) · `test.js` run `node test.js` to check the math.
+
+
