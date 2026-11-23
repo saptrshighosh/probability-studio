@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Probability Studio - Instructor</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;background:#0f2a1d;color:#fff}
+  main{max-width:1100px;margin:0 auto;padding:20px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  h1{margin:0;font-size:2.2rem} .sub{font-size:1.4rem;opacity:.85}
+  #timer{font-size:5rem;font-weight:700;font-variant-numeric:tabular-nums}
+  #join{background:#fff;color:#000;padding:10px;border-radius:12px;text-align:center;font-size:1.1rem}
+  #join svg{width:170px;height:170px;display:block;margin:0 auto 4px}
+  table{width:100%;border-collapse:collapse;margin-top:16px;font-size:2.2rem}
+  td{padding:10px 14px;border-bottom:1px solid #ffffff30} td.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr:first-child td{color:#ffd54a;font-weight:700}
+  .stat{font-size:1.3rem;opacity:.85;margin-top:8px}
+  details{background:#ffffff14;border-radius:10px;padding:10px 14px;margin-top:24px}
+  summary{cursor:pointer;font-size:1.1rem}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+  input,select,button{font-size:1rem;padding:8px 10px;border-radius:8px;border:0}
+  button{background:#ffd54a;cursor:pointer} button.x{background:#ff8a80}
+  #msg{color:#ffd54a;min-height:1.4em}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div><h1>🎄 <span id="gname">Probability Studio</span></h1><div class="sub" id="rinfo">Loading…</div><div id="timer"></div></div>
+    <div id="join"><div id="qr"></div><div>Code: <b id="codeShow"></b></div></div>
+  </div>
+  <div class="stat" id="stat"></div>
+  <table id="top5"></table>
+  <div class="stat" id="net"></div>
+
+  <details open>
+    <summary>Instructor controls (hide before projecting)</summary>
+    <div class="row">
+      <input id="pass" type="password" placeholder="Instructor passcode">
+      <label>Game <select id="game"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+      <label>Session code <input id="code" size="8" value="XMAS"></label>
+      <label>Minutes per round <input id="mins" type="number" value="10" min="1" max="30" style="width:70px"></label>
+    </div>
+    <div class="row">
+      <button data-r="1">Open round 1</button><button data-r="2">Open round 2</button>
+      <button data-r="3">Open round 3</button><button data-r="4">Open round 4</button>
+      <button class="x" id="closeNow">Close round now</button>
+      <button id="lobby">Back to lobby</button>
+      <button id="csv">Download CSV for Canvas</button>
+    </div>
+    <div id="msg"></div>
+  </details>
+</main>
+<script src="config.js"></script>
+<script src="engine.js"></script>
+<script src="game1.js"></script>
+<script src="api.js"></script>
+<script src="qrcode.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const money = n => 'H$' + Math.round(n).toLocaleString('en-US');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let st = null, rows = [], lastQr = '';
+
+const isOpen = () => st && st.open_until && Date.parse(st.open_until) > API.now();
+const upTo = () => (st.round === 0 ? 0 : (isOpen() ? st.round - 1 : st.round));
+
+function standings() {
+  const by = {};
+  rows.forEach(a => (by[a.student] = by[a.student] || []).push(a));
+  const u = upTo();
+  return Object.keys(by).map(s => ({ s, bal: Engine.balance(st.game, s, by[s], u) }))
+    .sort((a, b) => b.bal - a.bal || a.s.localeCompare(b.s));
+}
+
+function draw() {
+  if (!st) return;
+  const G = GAMES[st.game], list = standings();
+  $('gname').textContent = G ? G.name : 'Game ' + st.game + ' (not built yet)';
+  $('rinfo').textContent = st.round === 0 ? 'Lobby: waiting to start' : `Round ${st.round} of 4 · ` + (isOpen() ? 'OPEN' : 'closed');
+  $('codeShow').textContent = st.code;
+  const url = new URL('index.html?code=' + encodeURIComponent(st.code), location.href).href;
+  if (url !== lastQr && typeof qrcode === 'function') {
+    lastQr = url; const q = qrcode(0, 'M'); q.addData(url); q.make(); $('qr').innerHTML = q.createSvgTag(4, 0);
+  }
+  const answered = rows.filter(a => a.round === st.round).length;
+  $('stat').textContent = `${list.length} players · ${answered} answered this round · ${url.replace(/^https?:\/\//, '')}`;
+  $('top5').innerHTML = list.slice(0, 5).map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.s)}</td><td class="n">${money(p.bal)}</td></tr>`).join('');
+}
+
+async function poll() {
+  try {
+    st = await API.state(); rows = await API.answers(st.game);
+    $('net').textContent = ''; draw();
+  } catch (e) { $('net').textContent = '⚠ connection problem, retrying…'; }
+  setTimeout(poll, 5000);
+}
+let wasOpen = false;
+setInterval(() => {
+  if (!st) return;
+  const open = isOpen(), s = open ? Math.max(0, Math.ceil((Date.parse(st.open_until) - API.now()) / 1000)) : 0;
+  $('timer').textContent = open ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '';
+  if (wasOpen && !open) draw(); // round just closed: refresh standings immediately
+  wasOpen = open;
+}, 500);
+
+async function control(round, secs) {
+  $('msg').textContent = '';
+  try {
+    await API.setRound($('pass').value, +$('game').value, round, secs, $('code').value.trim() || 'XMAS');
+    $('msg').textContent = 'OK'; st = await API.state(); rows = await API.answers(st.game); draw();
+  } catch (e) { $('msg').textContent = /passcode/.test(e.message) ? 'Wrong passcode.' : 'Could not reach the server.'; }
+}
+document.querySelectorAll('button[data-r]').forEach(b => b.onclick = () => control(+b.dataset.r, Math.round(+$('mins').value * 60)));
+$('closeNow').onclick = () => control(st ? st.round : 0, 0);
+$('lobby').onclick = () => control(0, 0);
+
+$('csv').onclick = () => {
+  if (!st) return;
+  const list = standings(), top = list.length ? list[0].bal : 1;
+  const lines = ['Login ID,Game,Balance,Points (%)'].concat(
+    list.map(p => [p.s, st.game, p.bal, Math.round(1000 * p.bal / top) / 10].join(',')));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  a.download = 'game' + st.game + '_scores.csv'; a.click();
+};
+poll();
+</script>
+</body>
+</html>
