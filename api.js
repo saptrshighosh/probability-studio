@@ -27,6 +27,8 @@ const API = (function () {
     },
     answers: (game, student) =>
       call('answers?game=eq.' + game + (student ? '&student=eq.' + encodeURIComponent(student) : '') + '&limit=5000'),
+    // one student's answers across all games (small)
+    mine: student => call('answers?student=eq.' + encodeURIComponent(student) + '&limit=5000'),
     submit: row => call('answers', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(row) }),
     setRound: (pass, game, round, secs, code) =>
       call('rpc/set_round', { method: 'POST', body: JSON.stringify({ p_pass: pass, p_game: game, p_round: round, p_secs: secs, p_code: code }) })

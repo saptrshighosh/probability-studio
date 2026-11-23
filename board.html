@@ -73,7 +73,7 @@ function standings() {
   const by = {};
   rows.forEach(a => (by[a.student] = by[a.student] || []).push(a));
   const u = upTo();
-  return Object.keys(by).map(s => ({ s, bal: Engine.balance(st.game, s, by[s], u) }))
+  return Object.keys(by).map(s => ({ s, bal: Engine.cumulative(s, by[s], st.game, u) }))
     .sort((a, b) => b.bal - a.bal || a.s.localeCompare(b.s));
 }
 
@@ -87,14 +87,20 @@ function draw() {
   if (url !== lastQr && typeof qrcode === 'function') {
     lastQr = url; const q = qrcode(0, 'M'); q.addData(url); q.make(); $('qr').innerHTML = q.createSvgTag(4, 0);
   }
-  const answered = rows.filter(a => a.round === st.round).length;
+  const answered = rows.filter(a => a.game === st.game && a.round === st.round).length;
   $('stat').textContent = `${list.length} players · ${answered} answered this round · ${url.replace(/^https?:\/\//, '')}`;
   $('top5').innerHTML = list.slice(0, 5).map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.s)}</td><td class="n">${money(p.bal)}</td></tr>`).join('');
 }
 
+// Money carries over, so load every game up to the current one (one request per game keeps each under the 1000-row API limit).
+async function loadRows() {
+  const per = await Promise.all([1, 2, 3, 4].filter(g => g <= st.game).map(g => API.answers(g)));
+  return [].concat(...per);
+}
+
 async function poll() {
   try {
-    st = await API.state(); rows = await API.answers(st.game);
+    st = await API.state(); rows = await loadRows();
     $('net').textContent = ''; draw();
   } catch (e) { $('net').textContent = '⚠ connection problem, retrying…'; }
   setTimeout(poll, 5000);
@@ -112,7 +118,7 @@ async function control(round, secs) {
   $('msg').textContent = '';
   try {
     await API.setRound($('pass').value, +$('game').value, round, secs, $('code').value.trim() || 'XMAS');
-    $('msg').textContent = 'OK'; st = await API.state(); rows = await API.answers(st.game); draw();
+    $('msg').textContent = 'OK'; st = await API.state(); rows = await loadRows(); draw();
   } catch (e) { $('msg').textContent = /passcode/.test(e.message) ? 'Wrong passcode.' : 'Could not reach the server.'; }
 }
 document.querySelectorAll('button[data-r]').forEach(b => b.onclick = () => control(+b.dataset.r, Math.round(+$('mins').value * 60)));

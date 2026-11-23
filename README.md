@@ -87,6 +87,7 @@ Canvas upload: the CSV has `Login ID, Game, Balance, Points (%)`. Canvas's own i
 ## Good to know
 
 - **Scoring.** Each round, a student loses money equal to how much worse their choice was than the best choice. A missed round counts as the worst choice. A correct numeric answer adds a $5 bonus (H$5,000). H$1,000 equals $1.
+- **Money carries over between games.** Game 2 starts from each student's Game 1 balance, and so on. A student who skipped an earlier game has that game counted as missed (the worst options), so attendance matters. The CSV and leaderboard show the running total.
 - **Numbers differ per student**, so students can talk about methods but not copy answers.
 - **First answer is final.** Late answers are rejected by the server's clock, not the phone's.
 - **The leaderboard shows** only students who answered at least once.

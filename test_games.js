@@ -105,5 +105,19 @@ for (const g of [1, 2, 3, 4]) {
   ok('game ' + g + ': all missed < start', E.balance(g, s, [], 4) < E.START);
 }
 
+// --- Money carries over between games
+{
+  const s = 'carry', perfectRows = g => [1, 2, 3, 4].map(r => { const q = E.build(g, s, r); return { game: g, round: r, choice: E.result(q, null).best, nums: q.asks.map(a => a.answer) }; });
+  const bonus = g => [1, 2, 3, 4].reduce((t, r) => t + E.build(g, s, r).asks.length * E.BONUS, 0);
+  const g1 = perfectRows(1), g2 = perfectRows(2);
+  ok('carry-over: start of game 2 keeps game 1 result', E.cumulative(s, g1, 2, 0) === E.START + E.SCALE * bonus(1));
+  ok('carry-over: game 1 perfect + game 2 perfect adds up', E.cumulative(s, g1.concat(g2), 2, 4) === E.START + E.SCALE * (bonus(1) + bonus(2)));
+  ok('carry-over: skipping game 1 costs money in game 2', E.cumulative(s, g2, 2, 4) < E.cumulative(s, g1.concat(g2), 2, 4));
+  ok('carry-over: game 1 equals plain balance', E.cumulative(s, g1, 1, 4) === E.balance(1, s, g1, 4));
+  ok('carry-over: rows of other games are not mixed in', E.cumulative(s, g1.concat(g2), 1, 4) === E.balance(1, s, g1, 4));
+  const g3 = perfectRows(3), g4 = perfectRows(4);
+  ok('carry-over: all four perfect games', E.cumulative(s, [].concat(g1, g2, g3, g4), 4, 4) === E.START + E.SCALE * (bonus(1) + bonus(2) + bonus(3) + bonus(4)));
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nall passed');
 process.exit(fails ? 1 : 0);

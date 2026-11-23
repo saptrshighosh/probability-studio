@@ -38,7 +38,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const money = n => 'H$' + Math.round(n).toLocaleString('en-US');
 
 let me = store.get('ps_user'), code = new URLSearchParams(location.search).get('code') || store.get('ps_code');
-let st = null, mine = {}, pending = null, viewKey = '', started = false, badCode = false;
+let st = null, mine = {}, allMine = [], pending = null, viewKey = '', started = false, badCode = false;
 
 function loginView(msg) {
   viewKey = '';
@@ -83,7 +83,7 @@ function render() {
 function draw() {
   const G = GAMES[st.game], r = st.round;
   if (!G) { app.innerHTML = `<h1>🎄 Probability Studio</h1><div class="card"><h2>Game ${st.game} is not ready yet</h2></div>`; return; }
-  const bal = Engine.balance(st.game, me, Object.values(mine), upTo());
+  const bal = Engine.cumulative(me, allMine, st.game, upTo());
   let html = `<h1>🎄 ${esc(G.name)}</h1><div class="card bar"><span>${esc(me)}</span><span>${money(bal)}</span></div>`;
   if (r === 0) {
     html += `<div class="card"><h2>Waiting for the instructor…</h2><p>${esc(G.intro)}</p><p class="muted">Keep this page open. The first question appears here by itself.</p></div>`;
@@ -140,8 +140,8 @@ async function trySubmit() {
 async function tick() {
   try {
     st = await API.state();
-    const rows = await API.answers(st.game, me);
-    mine = {}; rows.forEach(a => { mine[a.round] = a; });
+    allMine = await API.mine(me);
+    mine = {}; allMine.forEach(a => { if (a.game === st.game) mine[a.round] = a; });
     if (pending && pending.game === st.game && mine[pending.round]) pending = null;
     if (pending) await trySubmit();
     render();

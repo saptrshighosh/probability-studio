@@ -69,20 +69,31 @@
     return { answered: true, best, delta, bonus, right };
   }
 
-  // rows = this student's answers for this game. Rounds 1..upTo are counted.
+  // Net dollars from rounds 1..upTo of one game. rows = this student's answers (any game).
   // A missed round counts as the worst option.
-  function balance(game, student, rows, upTo) {
+  function gameSum(game, student, rows, upTo) {
     const by = {};
-    rows.forEach(a => { by[a.round] = a; });
+    rows.forEach(a => { if (a.game === undefined || a.game === game) by[a.round] = a; });
     let sum = 0;
     for (let r = 1; r <= upTo; r++) {
       const res = result(build(game, student, r), by[r]);
       sum += res.delta + res.bonus;
     }
-    return Math.round(START + SCALE * sum);
+    return sum;
+  }
+  // Balance inside a single game, starting from H$1,000,000.
+  function balance(game, student, rows, upTo) {
+    return Math.round(START + SCALE * gameSum(game, student, rows, upTo));
+  }
+  // Running balance: money carries over. Earlier games count in full (skipped rounds = worst option),
+  // the current game counts up to round `upTo`.
+  function cumulative(student, rows, game, upTo) {
+    let sum = 0;
+    for (let g = 1; g < game; g++) if (GAMES[g]) sum += gameSum(g, student, rows, GAMES[g].rounds.length);
+    return Math.round(START + SCALE * (sum + gameSum(game, student, rows, upTo)));
   }
 
-  const Engine = { START, SCALE, BONUS, hash, rng, pick, comb, fact, binom, pois, Phi, build, result, balance };
+  const Engine = { START, SCALE, BONUS, hash, rng, pick, comb, fact, binom, pois, Phi, build, result, balance, cumulative };
   root.Engine = Engine;
   if (typeof module !== 'undefined') module.exports = Engine;
 })(typeof globalThis !== 'undefined' ? globalThis : window);
