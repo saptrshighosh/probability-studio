@@ -63,6 +63,14 @@
 <script>
 const $ = id => document.getElementById(id);
 const money = n => 'H$' + Math.round(n).toLocaleString('en-US');
+
+// If some files on the website are older than others, say so instead of failing silently.
+const ready = typeof Engine !== 'undefined' && typeof Engine.cumulative === 'function' && typeof API !== 'undefined' && typeof API.mine === 'function' &&
+              typeof GAMES !== 'undefined' && [1, 2, 3, 4].every(g => GAMES[g]);
+function fatal() {
+  document.body.innerHTML = '<div style="font-family:system-ui;max-width:560px;margin:30px auto;padding:16px;background:#fff;color:#000;border-radius:12px"><h2 style="color:#b00020">Some files are out of date</h2><p>Upload ALL of these to GitHub: engine.js, api.js, game1.js, game2.js, game3.js, game4.js, index.html, board.html. Then reload this page with Ctrl+Shift+R (Cmd+Shift+R on a Mac).</p></div>';
+}
+window.addEventListener('error', e => { const d = document.getElementById('dbg') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'dbg', style: 'position:fixed;bottom:0;left:0;right:0;background:#b00020;color:#fff;padding:6px;font:12px system-ui' })); d.textContent = 'Error: ' + e.message; });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let st = null, rows = [], lastQr = '';
 
@@ -134,7 +142,7 @@ $('csv').onclick = () => {
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
   a.download = 'game' + st.game + '_scores.csv'; a.click();
 };
-poll();
+if (!ready) fatal(); else poll();
 </script>
 </body>
 </html>
